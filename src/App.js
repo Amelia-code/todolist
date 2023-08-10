@@ -1,50 +1,69 @@
-import React from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useState, useEffect } from 'react';
+import {
+  Container, Form, TextInput,
+  SubmitInput, UnorderdList, ListItem,
+  TodoText, TodoDelete } from './styledComponents'
+import './App.css'
 
-const Eyes = styled.div`
-  display: flex;
-  justify-content: center;
-`;
-const Eye = styled.div`
-  width: 200px;
-  height: 200px;
-  border: 5px solid black;
-  border-radius: 50%;
-  position: relative;
-`;
+export default function App() {
+  const [todo, setTodo] = useState([]);
+  const [todoId, setTodoId] = useState(0);
 
-const moving = keyframes`
-  0%{
-    top: 40%;
-    left: 10%;
+  const handleSubmit = (todoText) => {
+    setTodo([
+      ...todo,
+      {
+        todoId: todoId,
+        todoText: todoText,
+        todoDone: false
+      }
+    ])
+    setTodoId(todoId + 1)
   }
-  100%{
-    top: 40%;
-    left: 70%;
+
+  const handleDelete = (todoId) => {
+    setTodo(todo.filter(item => item.todoId !== todoId))
   }
-`
-const Ball = styled.div`
-  width: 40px;
-  height: 40px;
-  background-color: #000000;
-  border-radius: 50%;
-  position: absolute;
-  animation: ${moving} 3s 0s linear alternate infinite;
-`
 
+  const handleToggle = (todoId) => {
+    setTodo(todo.map(item => item.todoId === todoId ? { ...item, todoDone: !item.todoDone } : item))
+  }
 
-function App() {
+  useEffect(() => {
+    const defaultTodo = JSON.parse(localStorage.getItem("todo"))
+
+    if(!defaultTodo) return;
+
+    setTodo(defaultTodo)
+    if(defaultTodo.length !== 0 ){
+      setTodoId(defaultTodo[defaultTodo.length - 1].todoId + 1)
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem("todo", JSON.stringify(todo))
+  }, [todo])
 
   return (
-    <Eyes>
-      <Eye>
-        <Ball />
-      </Eye>
-      <Eye>
-        <Ball />
-      </Eye>
-    </Eyes>
+    <Container>
+      <Form onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit(e.target.todo.value)
+        e.target.todo.value = ''
+      }}>
+        <TextInput type='text' placeholder='할일 쓰기' name='todo' />
+        <SubmitInput type='submit' value='추가' />
+      </Form>
+      <UnorderdList>
+        {todo.map((item, index) =>
+        <ListItem key={index}>
+          <TodoText onClick={() => handleToggle(item.todoId)} style={item.todoDone ? { textDecoration: 'line-through'} : {} }>
+            {item.todoText}
+          </TodoText>
+          <TodoDelete onClick={() => handleDelete(item.todoId)}>X</TodoDelete>
+        </ListItem>)}
+      </UnorderdList>
+    </Container>
   );
 }
 
-export default App
